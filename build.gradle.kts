@@ -1,12 +1,15 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.*
-import org.jlleitschuh.gradle.ktlint.reporter.*
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
+    val ktlintVersion = "9.2.1"
+
     application
     kotlin("jvm") version "1.3.71"
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
     id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("org.jlleitschuh.gradle.ktlint-idea") version "9.2.1"
+    id("org.jlleitschuh.gradle.ktlint-idea") version ktlintVersion
 }
 
 group = "uni-sopron"

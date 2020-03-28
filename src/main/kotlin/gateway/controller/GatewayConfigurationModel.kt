@@ -1,0 +1,3 @@
+package gateway.controller
+
+class GatewayConfigurationModel

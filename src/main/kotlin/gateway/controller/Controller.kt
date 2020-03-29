@@ -31,7 +31,6 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
             println("Starting modules blocking thread...")
             Thread.sleep(500)
         }
-
     }
 
     private fun buildControllerConfigurationFromInnerDatabase(): ControllerConfigurationModel {
@@ -45,12 +44,12 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     private fun saveControllerConfig(config: String) {
-        //insert config into database
+        // insert config into database
     }
 
     override fun saveConfig(config: String) {
         if (controllerState == ControllerState.INITIALIZING) {
-            webCommunicator.sendWebReply("Cant save config, because: ${controllerState}")
+            webCommunicator.sendWebReply("Cant save config, because: $controllerState")
             return
         }
         thread {
@@ -60,7 +59,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
 
     override fun start() {
         if (controllerState != ControllerState.NOT_RUNNING) {
-            webCommunicator.sendWebReply("Cant start, because: ${controllerState}")
+            webCommunicator.sendWebReply("Cant start, because: $controllerState")
             return
         }
         thread {
@@ -72,7 +71,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
 
     override fun stop(restart: Boolean) {
         if (controllerState != ControllerState.RUNNING) {
-            webCommunicator.sendWebReply("Cant stop/restart, because: ${controllerState}")
+            webCommunicator.sendWebReply("Cant stop/restart, because: $controllerState")
             return
         }
         thread {

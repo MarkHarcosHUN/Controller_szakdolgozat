@@ -1,7 +1,5 @@
 package gateway.controller
 
-import kotlin.concurrent.thread
-
 class ControllerPlatform : WebCommunicator {
     val webApiSendPort = "4000"
     val webApiRecievePort = "4001"
@@ -51,5 +49,3 @@ class ControllerPlatform : WebCommunicator {
         println(msg)
     }
 }
-
-

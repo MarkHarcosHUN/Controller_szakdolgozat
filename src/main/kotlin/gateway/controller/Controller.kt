@@ -2,107 +2,107 @@ package gateway.controller
 
 import kotlin.concurrent.thread
 
-class Controller : Manageable {
+class Controller(private val innerDatabase: String, val webCommunicator: WebCommunicator) : Manageable {
+
+    private var supervisionThread: Thread = Thread(Supervision())
+    private var controllerState: ControllerState = ControllerState.NOT_RUNNING
     private lateinit var controllerConfigurationModel: ControllerConfigurationModel
-    private var controllerState: ControllerState
-    private val webApi: WebApi
-    private var testValue = 1
 
-    init {
-        controllerState = ControllerState.NOT_RUNNING
-        webApi = WebApi(this).also {
-            thread(start = true) {
-                it.startListening()
-            }
-        }
-
-        start(ControllerConfigurationModel(listOf("")))
+    private fun setupAndStart() {
+        controllerConfigurationModel = buildControllerConfigurationFromInnerDatabase()
+        startModules(readGatewayConfigurationFromOutterDatabase())
+        supervisionThread = Thread(Supervision()).also { it.start() }
     }
 
-    override fun start(controllerConfigurationModel: ControllerConfigurationModel) {
-        if (controllerState != ControllerState.NOT_RUNNING) throw ControllerException("Cant start: $controllerState")
-        println("Starting gateway...")
-        thread(start = true) {
-            setup(controllerConfigurationModel)
-            startSupervision()
-            cleanup()
-        }
-    }
-
-    override fun stop() {
-        if (controllerState != ControllerState.RUNNING) {
-            throw ControllerException("Cant stop: $controllerState")
-        }
-
-        println("stopping gateway...")
-        controllerState = ControllerState.TERMINATING
-    }
-
-    override fun restart(controllerConfigurationModel: ControllerConfigurationModel) {
-        if (controllerState != ControllerState.RUNNING) {
-            throw ControllerException("Cant restart: $controllerState")
-        }
-
-        thread(start = true) {
-            print("Restarting ...")
-            stop()
-            while (controllerState != ControllerState.NOT_RUNNING) {
-                println(" waiting for modules to stop")
-                Thread.sleep(1000)
-            }
-            // thread a threadben..lehet memory leak
-            start(controllerConfigurationModel)
-        }
-    }
-
-    private fun cleanup() {
-        println("stopping gateway modules...")
+    private fun shutdown() {
+        supervisionThread.interrupt()
         stopModules()
-        controllerState = ControllerState.NOT_RUNNING
-        println("Gateway stopped")
     }
 
-    private fun setup(model: ControllerConfigurationModel) {
-        controllerState = ControllerState.INITIALIZING
-        controllerConfigurationModel = model
-        startModules(fillModelFromDatabase())
+    private fun readGatewayConfigurationFromOutterDatabase(): String {
+        return "{config}"
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun startModules(model: GatewayConfigurationModel) {
-        println("Starting modules")
-    }
-
-    private fun startSupervision() {
-        println("Supervision started")
-        controllerState = ControllerState.RUNNING
-        while (controllerState == ControllerState.RUNNING) {
-            println("testvalue: ${testValue++}")
-            Thread.sleep(1000)
+    private fun startModules(conf: String) {
+        println("Starting modules blocking thread...")
+        controllerConfigurationModel
+        conf
+        for (i in 1..5) {
+            println("Starting modules blocking thread...")
+            Thread.sleep(500)
         }
+
     }
 
-    private fun fillModelFromDatabase(): GatewayConfigurationModel {
-        println("Reading configuration database")
-        return GatewayConfigurationModel()
-    }
-
-    @Suppress("unused")
-    private fun createControllerConfigurationModel(): ControllerConfigurationModel {
-        return ControllerConfigurationModel(listOf(""))
+    private fun buildControllerConfigurationFromInnerDatabase(): ControllerConfigurationModel {
+        innerDatabase
+        return ControllerConfigurationModel(listOf())
     }
 
     private fun stopModules() {
-        Thread.sleep(3000)
+        println("Stopping modules blocking thread...")
+        Thread.sleep(1000)
+    }
+
+    private fun saveControllerConfig(config: String) {
+        //insert config into database
+    }
+
+    override fun saveConfig(config: String) {
+        if (controllerState == ControllerState.INITIALIZING) {
+            webCommunicator.sendWebReply("Cant save config, because: ${controllerState}")
+            return
+        }
+        thread {
+            saveControllerConfig(config)
+        }
+    }
+
+    override fun start() {
+        if (controllerState != ControllerState.NOT_RUNNING) {
+            webCommunicator.sendWebReply("Cant start, because: ${controllerState}")
+            return
+        }
+        thread {
+            controllerState = ControllerState.INITIALIZING
+            setupAndStart()
+            controllerState = ControllerState.RUNNING
+        }
+    }
+
+    override fun stop(restart: Boolean) {
+        if (controllerState != ControllerState.RUNNING) {
+            webCommunicator.sendWebReply("Cant stop/restart, because: ${controllerState}")
+            return
+        }
+        thread {
+            controllerState = ControllerState.TERMINATING
+            shutdown()
+            controllerState = ControllerState.NOT_RUNNING
+            if (restart) start()
+        }
     }
 }
 
-interface Manageable {
-    fun start(controllerConfigurationModel: ControllerConfigurationModel)
-    fun stop()
-    fun restart(controllerConfigurationModel: ControllerConfigurationModel)
+class Supervision : Runnable {
+    override fun run() {
+        try {
+            while (true) {
+                println("supervision communicate with modules")
+                Thread.sleep(4000)
+            }
+        } catch (e: InterruptedException) {
+            println("supervision interrupted!")
+        }
+    }
 }
 
 enum class ControllerState {
     NOT_RUNNING, RUNNING, INITIALIZING, TERMINATING
+}
+
+interface Manageable {
+    fun start()
+    fun stop(restart: Boolean = false)
+    fun saveConfig(config: String)
 }

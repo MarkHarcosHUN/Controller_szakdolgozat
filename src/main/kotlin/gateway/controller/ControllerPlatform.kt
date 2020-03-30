@@ -40,7 +40,7 @@ class ControllerPlatform : WebCommunicator {
                 controller.stop()
             }
             "restart" -> {
-                controller.stop(true)
+                controller.restart()
             }
         }
     }

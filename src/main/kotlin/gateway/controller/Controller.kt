@@ -69,16 +69,28 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
         }
     }
 
-    override fun stop(restart: Boolean) {
+    override fun stop() {
         if (controllerState != ControllerState.RUNNING) {
-            webCommunicator.sendWebReply("Cant stop/restart, because: $controllerState")
+            webCommunicator.sendWebReply("Cant stop, because: $controllerState")
             return
         }
         thread {
             controllerState = ControllerState.TERMINATING
             shutdown()
             controllerState = ControllerState.NOT_RUNNING
-            if (restart) start()
+        }
+    }
+
+    override fun restart() {
+        if (controllerState != ControllerState.RUNNING) {
+            webCommunicator.sendWebReply("Cant restart, because: $controllerState")
+            return
+        }
+        thread {
+            controllerState = ControllerState.TERMINATING
+            shutdown()
+            setupAndStart()
+            controllerState = ControllerState.RUNNING
         }
     }
 }
@@ -102,6 +114,7 @@ enum class ControllerState {
 
 interface Manageable {
     fun start()
-    fun stop(restart: Boolean = false)
+    fun stop()
+    fun restart()
     fun saveConfig(config: String)
 }

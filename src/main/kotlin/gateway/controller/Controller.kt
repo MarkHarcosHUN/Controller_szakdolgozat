@@ -48,7 +48,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     override fun saveConfig(config: String) {
-        synchronized(this){
+        synchronized(this) {
             if (controllerState == ControllerState.INITIALIZING) {
                 webCommunicator.sendWebReply("Cant save config, because: $controllerState")
                 return
@@ -60,7 +60,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     override fun start() {
-        synchronized(this){
+        synchronized(this) {
             if (controllerState != ControllerState.NOT_RUNNING) {
                 webCommunicator.sendWebReply("Cant start, because: $controllerState")
                 return
@@ -74,7 +74,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     override fun stop() {
-        synchronized(this){
+        synchronized(this) {
             if (controllerState != ControllerState.RUNNING) {
                 webCommunicator.sendWebReply("Cant stop, because: $controllerState")
                 return
@@ -88,7 +88,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     override fun restart() {
-        synchronized(this){
+        synchronized(this) {
             if (controllerState != ControllerState.RUNNING) {
                 webCommunicator.sendWebReply("Cant restart, because: $controllerState")
                 return

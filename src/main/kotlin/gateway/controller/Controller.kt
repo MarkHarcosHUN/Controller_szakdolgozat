@@ -4,8 +4,8 @@ import kotlin.concurrent.thread
 
 class Controller(private val innerDatabase: String, val webCommunicator: WebCommunicator) : Manageable {
 
-    private var supervisionThread: Thread = Thread(Supervision())
     private var controllerState: ControllerState = ControllerState.NOT_RUNNING
+    private var supervisionThread: Thread = Thread(Supervision())
     private lateinit var controllerConfigurationModel: ControllerConfigurationModel
 
     private fun setupAndStart() {
@@ -48,47 +48,56 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
     }
 
     override fun saveConfig(config: String) {
-        if (controllerState == ControllerState.INITIALIZING) {
-            webCommunicator.sendWebReply("Cant save config, because: $controllerState")
-            return
-        }
-        thread {
-            saveControllerConfig(config)
+        synchronized(this){
+            if (controllerState == ControllerState.INITIALIZING) {
+                webCommunicator.sendWebReply("Cant save config, because: $controllerState")
+                return
+            }
+            thread {
+                saveControllerConfig(config)
+            }
         }
     }
 
     override fun start() {
-        if (controllerState != ControllerState.NOT_RUNNING) {
-            webCommunicator.sendWebReply("Cant start, because: $controllerState")
-            return
+        synchronized(this){
+            if (controllerState != ControllerState.NOT_RUNNING) {
+                webCommunicator.sendWebReply("Cant start, because: $controllerState")
+                return
+            }
+            controllerState = ControllerState.INITIALIZING
         }
         thread {
-            controllerState = ControllerState.INITIALIZING
             setupAndStart()
             controllerState = ControllerState.RUNNING
         }
     }
 
     override fun stop() {
-        if (controllerState != ControllerState.RUNNING) {
-            webCommunicator.sendWebReply("Cant stop, because: $controllerState")
-            return
+        synchronized(this){
+            if (controllerState != ControllerState.RUNNING) {
+                webCommunicator.sendWebReply("Cant stop, because: $controllerState")
+                return
+            }
+            controllerState = ControllerState.TERMINATING
         }
         thread {
-            controllerState = ControllerState.TERMINATING
             shutdown()
             controllerState = ControllerState.NOT_RUNNING
         }
     }
 
     override fun restart() {
-        if (controllerState != ControllerState.RUNNING) {
-            webCommunicator.sendWebReply("Cant restart, because: $controllerState")
-            return
+        synchronized(this){
+            if (controllerState != ControllerState.RUNNING) {
+                webCommunicator.sendWebReply("Cant restart, because: $controllerState")
+                return
+            }
+            controllerState = ControllerState.TERMINATING
         }
         thread {
-            controllerState = ControllerState.TERMINATING
             shutdown()
+            controllerState = ControllerState.INITIALIZING
             setupAndStart()
             controllerState = ControllerState.RUNNING
         }

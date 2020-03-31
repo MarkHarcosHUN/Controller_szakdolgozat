@@ -12,14 +12,22 @@ class ControllerPlatform : WebCommunicator {
 
     init {
         setupWebApi()
+
         onWebMessage("start")
-        Thread.sleep(1)
         onWebMessage("start")
-        Thread.sleep(1)
+        onWebMessage("start")
+        onWebMessage("start")
         onWebMessage("stop")
+        onWebMessage("stop")
+        onWebMessage("restart")
         Thread.sleep(3000)
         onWebMessage("restart")
-        Thread.sleep(100000)
+        Thread.sleep(3000)
+
+        onWebMessage("stop")
+        Thread.sleep(3000)
+        onWebMessage("start")
+
     }
 
     fun setupWebApi() {
@@ -41,6 +49,9 @@ class ControllerPlatform : WebCommunicator {
             }
             "restart" -> {
                 controller.restart()
+            }
+            "save_config" -> {
+                controller.saveConfig("")
             }
         }
     }

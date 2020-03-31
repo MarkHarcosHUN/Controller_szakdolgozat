@@ -27,7 +27,6 @@ class ControllerPlatform : WebCommunicator {
         onWebMessage("stop")
         Thread.sleep(3000)
         onWebMessage("start")
-
     }
 
     fun setupWebApi() {

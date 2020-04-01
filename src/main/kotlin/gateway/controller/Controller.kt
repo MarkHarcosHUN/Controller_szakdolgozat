@@ -49,7 +49,7 @@ class Controller(private val innerDatabase: String, val webCommunicator: WebComm
 
     override fun saveConfig(config: String) {
         synchronized(this) {
-            if (controllerState == ControllerState.INITIALIZING) {
+            if (controllerState == ControllerState.INITIALIZING || controllerState == ControllerState.TERMINATING) {
                 webCommunicator.sendWebReply("Cant save config, because: $controllerState")
                 return
             }

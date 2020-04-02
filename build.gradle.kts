@@ -23,9 +23,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(group = "io.moquette", name = "moquette-broker", version = "0.12.1")
-    implementation(group= "org.eclipse.paho", name= "org.eclipse.paho.client.mqttv3", version= "1.2.2")
-
-
+    implementation(group = "org.eclipse.paho", name = "org.eclipse.paho.client.mqttv3", version = "1.2.2")
 }
 
 ktlint {

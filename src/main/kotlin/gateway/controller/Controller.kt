@@ -5,10 +5,7 @@ import org.eclipse.paho.client.mqttv3.*
 
 class Controller() : Manageable, MqttCallback {
     override fun messageArrived(topic: String?, message: MqttMessage?) {
-       when (topic) {
-           "save" -> saveToDatabase(message.toString())
-           // "connect" -> modules.get(message.toString()).setConnected()
-       }
+
     }
     override fun connectionLost(cause: Throwable?) {
         TODO("not implemented") // To change body of created functions use File | Settings | File Templates.

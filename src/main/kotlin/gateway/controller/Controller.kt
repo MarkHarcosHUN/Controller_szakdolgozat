@@ -5,24 +5,24 @@ import org.eclipse.paho.client.mqttv3.*
 
 class Controller() : Manageable, MqttCallback {
     override fun messageArrived(topic: String?, message: MqttMessage?) {
-       when(topic){
-               "save" -> saveToDatabase(message.toString())
-               //"connect" -> modules.get(message.toString()).setConnected()
+       when (topic) {
+           "save" -> saveToDatabase(message.toString())
+           // "connect" -> modules.get(message.toString()).setConnected()
        }
     }
     override fun connectionLost(cause: Throwable?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
     }
 
     override fun deliveryComplete(token: IMqttDeliveryToken?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
     }
 
-    private var innerDatabase : InnerDatabase = InnerDatabaseImpl()
+    private var innerDatabase: InnerDatabase = InnerDatabaseImpl()
     private var controllerState: ControllerState = ControllerState.NOT_RUNNING
     private var supervisionThread: Thread = Thread(Supervision())
     private lateinit var controllerConfigurationModel: ControllerConfigurationModel
-    private var mqttClient =MqttClient("tcp://localhost:1883","controller").also { it.setCallback(this) }
+    private var mqttClient = MqttClient("tcp://localhost:1883", "controller").also { it.setCallback(this) }
 
     private fun setupAndStart() {
         controllerConfigurationModel = buildControllerConfigurationFromInnerDatabase()
@@ -30,7 +30,7 @@ class Controller() : Manageable, MqttCallback {
         startModules(readGatewayConfigurationFromOutterDatabase())
         supervisionThread = Thread(Supervision()).also { it.start() }
     }
-    private fun setupMqttClient(){
+    private fun setupMqttClient() {
         mqttClient.connect()
         mqttClient.subscribe("lol")
         mqttClient.publish("lol", MqttMessage("anyád".toByteArray()))
@@ -40,8 +40,7 @@ class Controller() : Manageable, MqttCallback {
         supervisionThread.interrupt()
         stopModules()
     }
-    fun saveToDatabase(toString: String){
-
+    fun saveToDatabase(toString: String) {
     }
 
     private fun readGatewayConfigurationFromOutterDatabase(): String {
@@ -73,20 +72,20 @@ class Controller() : Manageable, MqttCallback {
         // insert config into database
     }
 
-    override fun saveConfig(config: String) : ResponseObject{
+    override fun saveConfig(config: String): ResponseObject {
         synchronized(this) {
             if (controllerState == ControllerState.INITIALIZING || controllerState == ControllerState.TERMINATING) {
-                return ResponseObject("Cant save config, because: $controllerState",false)
+                return ResponseObject("Cant save config, because: $controllerState", false)
             }
             saveControllerConfig(config)
-            return ResponseObject("Configuration saved",true)
+            return ResponseObject("Configuration saved", true)
         }
     }
 
-    override fun start() : ResponseObject {
+    override fun start(): ResponseObject {
         synchronized(this) {
             if (controllerState != ControllerState.NOT_RUNNING) {
-                return ResponseObject("Cant start, because: $controllerState",false)
+                return ResponseObject("Cant start, because: $controllerState", false)
             }
             controllerState = ControllerState.INITIALIZING
         }
@@ -94,13 +93,13 @@ class Controller() : Manageable, MqttCallback {
             setupAndStart()
             controllerState = ControllerState.RUNNING
         }
-        return ResponseObject("Gateway starting...",true)
+        return ResponseObject("Gateway starting...", true)
     }
 
-    override fun stop() : ResponseObject{
+    override fun stop(): ResponseObject {
         synchronized(this) {
             if (controllerState != ControllerState.RUNNING) {
-                return ResponseObject("Cant stop, because: $controllerState",false)
+                return ResponseObject("Cant stop, because: $controllerState", false)
             }
             controllerState = ControllerState.TERMINATING
         }
@@ -108,13 +107,13 @@ class Controller() : Manageable, MqttCallback {
             shutdown()
             controllerState = ControllerState.NOT_RUNNING
         }
-        return ResponseObject("Gateway terminating...",true)
+        return ResponseObject("Gateway terminating...", true)
     }
 
-    override fun restart() : ResponseObject{
+    override fun restart(): ResponseObject {
         synchronized(this) {
             if (controllerState != ControllerState.RUNNING) {
-                return ResponseObject("Cant restart, because: $controllerState",false)
+                return ResponseObject("Cant restart, because: $controllerState", false)
             }
             controllerState = ControllerState.TERMINATING
         }
@@ -124,7 +123,7 @@ class Controller() : Manageable, MqttCallback {
             setupAndStart()
             controllerState = ControllerState.RUNNING
         }
-        return ResponseObject("Gateway restarting...",true)
+        return ResponseObject("Gateway restarting...", true)
     }
 }
 
@@ -146,9 +145,9 @@ enum class ControllerState {
 }
 
 interface Manageable {
-    fun start() : ResponseObject
-    fun stop() : ResponseObject
-    fun restart() : ResponseObject
-    fun saveConfig(config: String) : ResponseObject
+    fun start(): ResponseObject
+    fun stop(): ResponseObject
+    fun restart(): ResponseObject
+    fun saveConfig(config: String): ResponseObject
 }
-data class ResponseObject(var message: String, var success : Boolean)
+data class ResponseObject(var message: String, var success: Boolean)

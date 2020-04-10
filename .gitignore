@@ -19,10 +19,10 @@ modules.xml
 .directory
 .Trash-*
 .nfs*
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
+Thumbs.gateway.controller.db
+Thumbs.gateway.controller.db:encryptable
+ehthumbs.gateway.controller.db
+ehthumbs_vista.gateway.controller.db
 *.stackdump
 [Dd]esktop.ini
 *.lnk

@@ -5,20 +5,35 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
+import io.netty.util.internal.SocketUtils.accept
+import java.net.ServerSocket
+import io.netty.util.internal.SocketUtils.accept
 
 
-class HttpServer(private val controller: Manageable) {
 
-    private val PORT = 8001
-    private val server: HttpServer
 
-    init {
-        server = HttpServer.create(InetSocketAddress(PORT), 0)
-        server.createContext("/", this::handleCommands)
-        server.executor = Executors.newCachedThreadPool()
-        server.start()
+class HttpServerWithSockets(private val controller: Manageable) :Runnable {
+    private val serverSocket: ServerSocket
+
+    override fun run() {
+
     }
 
+    private val PORT = 8001
+
+
+    init {
+
+        serverSocket = ServerSocket(PORT, 10)
+        /* server.createContext("/", this::handleCommands)
+         server.executor = Executors.newCachedThreadPool()
+         server.start()
+
+         */
+    }
+    private fun start(){
+
+    }
     private fun handleCommands(exchange: HttpExchange) {
         val method= exchange.requestMethod
         val uriPath = exchange.requestURI.path

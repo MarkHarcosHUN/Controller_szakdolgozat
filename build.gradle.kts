@@ -23,11 +23,13 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(group = "io.moquette", name = "moquette-broker", version = "0.12.1")
-    implementation(group = "org.eclipse.paho", name = "org.eclipse.paho.client.mqttv3", version = "1.2.2")
+    implementation(group = "org.eclipse.paho", name = "org.eclipse.paho.client.mqttv3", version = "1.2.0")
     implementation(group = "org.iq80.leveldb", name = "leveldb", version = "0.12")
     implementation(group = "commons-io", name = "commons-io", version = "2.6")
     implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5")
     implementation(group = "com.google.code.gson", name = "gson", version = "2.8.5")
+    implementation(group = "mysql", name = "mysql-connector-java", version = "8.0.19")
+
 }
 
 ktlint {

@@ -1,5 +1,5 @@
 package gateway.controller.models
 
 data class GetLogCommandModel (
-    val amount : Int
+    val amount : Int = 3
 )

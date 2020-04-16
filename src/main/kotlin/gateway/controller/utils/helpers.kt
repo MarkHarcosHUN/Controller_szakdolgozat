@@ -2,6 +2,8 @@ package gateway.controller.utils
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import gateway.controller.db.InnerDatabase
+import gateway.controller.models.ControllerConfigurationModel
 import org.apache.commons.io.input.ReversedLinesFileReader
 import java.io.File
 import java.nio.charset.Charset
@@ -24,7 +26,7 @@ class HistoryManager{
                 var reader =ReversedLinesFileReader(File(historyFilePath), Charset.defaultCharset())
                 for(num in 1..numLines){
                     var line=reader.readLine()
-                    if(line==null) break;
+                    if(line==null) break
                     array.add(line)
                 }
                 return array.joinToString("\n")
@@ -33,7 +35,9 @@ class HistoryManager{
     }
 }
 @Throws(JsonSyntaxException::class)
-fun <T> convertFromJson(json : String, to : Class<T>) : T {
+fun <T> convertFromJson(json : String, to : Class<T>) : T? {
    return Gson().fromJson(json, to)
 }
+inline fun <reified T : Any> parseJsonTo(str: String): T = Gson().fromJson(str, T::class.java)
 
+fun readFileDirectlyAsText(fileName: String): String = File(fileName).readText(Charsets.UTF_8)

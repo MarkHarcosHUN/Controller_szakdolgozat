@@ -9,12 +9,13 @@ data class ControllerConfigurationModel(
         data class ConnectionOptions(
             @SerializedName("gateway_id")
             val gatewayId: Int,
+            val db: String,
             val url: String,
             val user: String,
             val password: String
     )
     // necessary for checking valid input
     fun isValid(): Boolean {
-        return !(modules == null || connectionOptions.gatewayId == null || connectionOptions == null || connectionOptions.url == null || connectionOptions.user == null || connectionOptions.password == null)
+        return !(connectionOptions.db == null || modules == null || connectionOptions.gatewayId == null || connectionOptions == null || connectionOptions.url == null || connectionOptions.user == null || connectionOptions.password == null)
     }
 }

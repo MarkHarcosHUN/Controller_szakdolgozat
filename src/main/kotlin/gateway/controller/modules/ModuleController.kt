@@ -1,10 +1,8 @@
 package gateway.controller.modules
 
+import kotlin.concurrent.thread
+
 class ModuleController() {
-    companion object {
-
-    }
-
 
     private var moduleProcesses = HashMap<String, Process>()
     private var modulesAcked = HashMap<String, Boolean>()

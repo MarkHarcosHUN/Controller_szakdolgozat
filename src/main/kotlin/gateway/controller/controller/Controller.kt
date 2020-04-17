@@ -6,7 +6,9 @@ import gateway.controller.utils.HistoryManager.Companion.updateHistory
 import gateway.controller.db.InnerDatabase
 import gateway.controller.modules.ModuleController
 import gateway.controller.modules.ModuleRegistry
+import io.moquette.broker.Server
 import org.eclipse.paho.client.mqttv3.*
+import java.io.File
 import java.sql.DriverManager
 
 val TOPIC_ALIVE = "modules/alive"
@@ -24,6 +26,7 @@ class Controller : MqttCallback{
 
     internal fun setupAndStart() {
         updateHistory("Starting gateway...")
+
         controllerConfigurationModel = InnerDatabase.getControllerConfig()
         moduleController = ModuleController()
         TOPIC_ACK = "modules/${controllerConfigurationModel.modules.size}"
@@ -31,14 +34,19 @@ class Controller : MqttCallback{
 
         updateHistory("Starting modules...")
 
-        if(startModules()){
-            mqttClient.publish(TOPIC_START, MqttMessage("start".toByteArray()))
-            supervisionThread = Thread(Supervision()).also { it.start() }
-            updateHistory("Gateway functionality started.")
-        } else{
+        try{
+            if(startModules()){
+                mqttClient.publish(TOPIC_START, MqttMessage("start".toByteArray()))
+                supervisionThread = Thread(Supervision()).also { it.start() }
+                updateHistory("Gateway functionality started.")
+            } else{
+                throw Exception("Unable to start modules.")
+            }
+        }catch(e: Exception){
             moduleController.killModules()
-            throw Exception("Unable to start modules.")
+            throw e
         }
+
     }
     private fun setupMqttClient() =
         MqttClient("tcp://${mqttServerConfig.url}", "controller")
@@ -91,7 +99,7 @@ class Controller : MqttCallback{
 
         }
         println("Wait for modules to start")
-        Thread.sleep(5000)
+        Thread.sleep(3000)
         return moduleController.isAllModuleStarted()
     }
 
@@ -118,9 +126,9 @@ class Controller : MqttCallback{
             var id = JsonParser().parse(message.toString()).asJsonObject["id"].asInt
             println(id)
             Class.forName("com.mysql.cj.jdbc.Driver")
-                DriverManager.getConnection(controllerConfigurationModel.connectionOptions.url, controllerConfigurationModel.connectionOptions.user, controllerConfigurationModel.connectionOptions.password).use {
+                DriverManager.getConnection("jdbc:mysql://"+ gatewayDbConfig.url+"/"+ gatewayDbConfig.name+"?serverTimezone=UTC", gatewayDbConfig.username, gatewayDbConfig.password).use {
                     val stmt = it.createStatement()
-                    stmt.executeUpdate("UPDATE erti_teszt.erti_test SET processed=1 where ID=$id")
+                    stmt.executeUpdate("UPDATE ${gatewayDbConfig.table} SET processed=1 where ID=$id")
                 }
 
 

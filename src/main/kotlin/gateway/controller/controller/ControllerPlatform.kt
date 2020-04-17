@@ -1,18 +1,17 @@
 package gateway.controller.controller
 
 
-import com.google.gson.Gson
-import gateway.controller.models.ModuleParametersModel
-import gateway.controller.models.MqttServerConfig
+import gateway.controller.models.GatewayDbConfigurationModel
+import gateway.controller.models.MqttServerConfigModel
 import io.moquette.broker.Server
 import gateway.controller.server.HttpServer
 import gateway.controller.utils.parseJsonTo
 import gateway.controller.utils.readFileDirectlyAsText
-import io.moquette.broker.config.IConfig
 import org.eclipse.paho.client.mqttv3.*
 import java.io.File
 
-val mqttServerConfig  =parseJsonTo<MqttServerConfig>(readFileDirectlyAsText("config/mqtt.json"))
+val mqttServerConfig  = parseJsonTo<MqttServerConfigModel>(readFileDirectlyAsText("config/mqtt.json"))
+val gatewayDbConfig = parseJsonTo<GatewayDbConfigurationModel>(readFileDirectlyAsText("config/gateway_db.json"))
 
 class ControllerPlatform {
     val mqttBroker = startBroker()
@@ -20,13 +19,8 @@ class ControllerPlatform {
     private val httpServer = HttpServer(ControllerHttpWrapper(controller))
 
     init{
-
-      //  println(ModuleConfigFromMysql(InnerDatabase.getControllerConfig().connectionOptions).getConfig("validation"))
         var client=CouriousClient()
-        //Connect().conn()
-        //start that fuck!
-        //val availabeModules = Gson().fromJson(readFileDirectlyAsText("config.json"), ModuleParametersModel::class.java)
-      //  controller.setupAndStart()
+
     }
     private fun startBroker(): Server {
         var server = Server()

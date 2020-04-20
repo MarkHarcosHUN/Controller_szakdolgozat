@@ -14,7 +14,7 @@ data class ControllerConfigurationModel(
             val user: String,
             val password: String
     )
-    // necessary for checking valid input
+    // necessary for checking if all input set, to ensure correctness need further checks.
     fun isValid(): Boolean {
         return !(connectionOptions.db == null || modules == null || connectionOptions.gatewayId == null || connectionOptions == null || connectionOptions.url == null || connectionOptions.user == null || connectionOptions.password == null)
     }

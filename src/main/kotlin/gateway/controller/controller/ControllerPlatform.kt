@@ -19,8 +19,8 @@ class ControllerPlatform {
     private val httpServer = HttpServer(ControllerHttpWrapper(controller))
 
     init{
+        // register client to monitor mqtt activity
         var client=CouriousClient()
-
     }
     private fun startBroker(): Server {
         var server = Server()
@@ -28,8 +28,8 @@ class ControllerPlatform {
         return server
     }
 }
-class CouriousClient() : MqttCallback{
-    private val client = MqttClient("tcp://localhost:1883", "courious")
+class CouriousClient : MqttCallback{
+    private val client = MqttClient("tcp://${mqttServerConfig.url}", "courious")
         .apply {
             connect(MqttConnectOptions().apply {
                 isCleanSession = true
@@ -41,13 +41,9 @@ class CouriousClient() : MqttCallback{
         println("$topic : ${message.toString()}")
     }
 
-    override fun connectionLost(cause: Throwable?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun connectionLost(cause: Throwable?) {}
 
-    override fun deliveryComplete(token: IMqttDeliveryToken?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun deliveryComplete(token: IMqttDeliveryToken?) {}
 
 }
 

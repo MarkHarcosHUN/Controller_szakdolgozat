@@ -27,7 +27,6 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
         } catch (e: Exception) {
             controllerState = ControllerState.NOT_RUNNING
             HistoryManager.updateHistory("Failed to start gateway: ${e.localizedMessage}")
-            e.printStackTrace()
             return HttpResponse(e.localizedMessage)
         }
         return HttpResponse("Gateway started successfully...")

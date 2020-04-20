@@ -8,7 +8,7 @@ class ModuleController() {
     private var modulesAcked = HashMap<String, Boolean>()
 
     fun isAllModuleStarted() : Boolean = modulesAcked.all { it.value }
-    fun killModules() = moduleProcesses.forEach { name, process ->  process.destroy().also { println(name+" process destroyed.") }}
+    fun killModules() = moduleProcesses.forEach { name, process ->  process.destroyForcibly().also { println(name+" process destroyed.") }}
     fun setModuleStarted(moduleName : String) {
         modulesAcked[moduleName] = true
     }

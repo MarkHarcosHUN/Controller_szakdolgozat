@@ -1,6 +1,8 @@
 package gateway.controller.utils
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import gateway.controller.db.InnerDatabase
 import gateway.controller.models.ControllerConfigurationModel
@@ -41,3 +43,10 @@ fun <T> convertFromJson(json : String, to : Class<T>) : T? {
 inline fun <reified T : Any> parseJsonTo(str: String): T = Gson().fromJson(str, T::class.java)
 
 fun readFileDirectlyAsText(fileName: String): String = File(fileName).readText(Charsets.UTF_8)
+
+fun makeJsonPretty(json : String) : String{
+    val parser = JsonParser()
+    val json = parser.parse(json).asJsonObject
+    val builder = GsonBuilder().setPrettyPrinting().create()
+    return builder.toJson(json)
+}

@@ -3,6 +3,7 @@ package gateway.controller.server
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import gateway.controller.utils.HistoryManager
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
@@ -50,10 +51,16 @@ class HttpServer(private val controller: Manageable) {
     }
 
     private fun sendResponse(exchange: HttpExchange, responseObject: HttpResponse,statusCode : Int = 200) {
-        exchange.sendResponseHeaders(statusCode, responseObject.message.toByteArray().size.toLong())
-        val os = exchange.responseBody
-        os.write(responseObject.message.toByteArray())
-        os.close()
+        HistoryManager.updateHistory(responseObject.message)
+        try{
+            exchange.sendResponseHeaders(statusCode, responseObject.message.toByteArray().size.toLong())
+            val os = exchange.responseBody
+            os.write(responseObject.message.toByteArray())
+            os.close()
+        } catch (e : Exception){
+            HistoryManager.updateHistory("A problem occurred during sending response to a client.")
+        }
+
     }
     private fun getPostAsString(exchange: HttpExchange) : String{
         return exchange.requestBody.bufferedReader().use { it.readText() }

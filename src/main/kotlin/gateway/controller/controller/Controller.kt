@@ -13,6 +13,7 @@ import java.sql.DriverManager
 
 val TOPIC_ALIVE = "modules/alive"
 val TOPIC_START = "modules/0"
+
 // Ack topic depends on the number of modules in the process.
 lateinit var TOPIC_ACK : String
 
@@ -25,6 +26,7 @@ class Controller : MqttCallback{
     private lateinit var mqttClient : MqttClient
 
     internal fun setupAndStart() {
+
         updateHistory("Starting gateway...")
 
         controllerConfigurationModel = InnerDatabase.getControllerConfig()
@@ -38,9 +40,8 @@ class Controller : MqttCallback{
             if(startModules()){
                 mqttClient.publish(TOPIC_START, MqttMessage("start".toByteArray()))
                 supervisionThread = Thread(Supervision()).also { it.start() }
-                updateHistory("Gateway functionality started.")
             } else{
-                throw Exception("Unable to start modules.")
+                throw Exception("Not all modules started correctly.")
             }
         }catch(e: Exception){
             moduleController.killModules()
@@ -67,7 +68,7 @@ class Controller : MqttCallback{
         updateHistory("Stopping modules...")
         stopModules()
         mqttClient.disconnectForcibly()
-        updateHistory("Gateway stopped.")
+        Thread.sleep(2000)
     }
     fun saveToDatabase(toString: String) {
     }
@@ -78,6 +79,8 @@ class Controller : MqttCallback{
 
     private fun startModules() : Boolean {
         var moduleRegistry=ModuleRegistry(controllerConfigurationModel.connectionOptions)
+
+        File("config/tarolo.json").writeText(moduleRegistry.get("tarolo").getParams())
 
         controllerConfigurationModel.modules.forEachIndexed {index, moduleName ->
 
@@ -93,7 +96,7 @@ class Controller : MqttCallback{
                 add("""modules/${index + 1}""")
                 add(module.getParams())
             }
-
+            println(command)
             var proc = ProcessBuilder(convertToWin10(command)).start()
             moduleController.addModule(moduleName,proc)
 
@@ -114,7 +117,6 @@ class Controller : MqttCallback{
 
     internal fun saveControllerConfig(configJson: String) {
         InnerDatabase.save(InnerDatabase.configKey,configJson)
-        updateHistory("New configuration saved.")
     }
 
     override fun messageArrived(topic: String?, message: MqttMessage?) {

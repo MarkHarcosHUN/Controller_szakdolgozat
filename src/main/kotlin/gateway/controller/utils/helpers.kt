@@ -18,6 +18,7 @@ class HistoryManager{
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val historyFilePath = "history.log"
         fun  updateHistory(line : String){
+            println(line)
             synchronized(this){
                 File(historyFilePath).appendText("${LocalDateTime.now().format(formatter)} : $line\n")
             }

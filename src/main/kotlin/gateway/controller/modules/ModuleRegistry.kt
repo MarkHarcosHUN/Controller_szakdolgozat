@@ -1,7 +1,6 @@
 package gateway.controller.modules
 
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import gateway.controller.controller.gatewayDbConfig
 import gateway.controller.controller.mqttServerConfig
 import gateway.controller.models.*
@@ -9,8 +8,6 @@ import gateway.controller.models.ControllerConfigurationModel.ConnectionOptions
 import gateway.controller.utils.convertFromJson
 import java.sql.DriverManager
 import java.sql.Statement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import gateway.controller.utils.makeJsonPretty
 
 /*
@@ -40,15 +37,50 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
             else -> throw Exception("No module registered with name: $moduleName")
         }
     }
+
+    private  inner class Reader : Module {
+
+        override fun getConfig(): String =
+            """
+                |{"waitingPeriod":5000,
+                |"limit":10,
+                |"sendingPeriod":"800",
+                |"serviceQuality":2,
+                |"broker":"${mqttServerConfig.url}",
+                |"credentials":
+                |{"clientId":"reader",
+                |"user":"${mqttServerConfig.user}",
+                |"pass":"${mqttServerConfig.password}"},
+                |"database":
+                |{"URL":"${gatewayDbConfig.url}",
+                |"name":"${gatewayDbConfig.name}",
+                |"username":"${gatewayDbConfig.username}",
+                |"password":"${gatewayDbConfig.password}",
+                |"table":"${gatewayDbConfig.table}",
+                |"attributes":"ID,datum,temperatureat2meter,relativehumidity,table_from"}}""".trimMargin()
+
+        override fun getStartCommand(): String = """java -jar modules/reader.jar"""
+
+
+    }
+
     // modules with mysql config build
 
     private inner class Validation : Module,  MySqlConfigAvailable {
-        override fun getParams(): String = getMysqlConfig(this)
+
+        override fun getConfig(): String = getMysqlConfig(this)
 
         override fun getStartCommand(): String = "java -jar modules/validate.jar"
 
-        override fun buildParamsFromDatabase(statement : Statement): String {
-            val rs = statement.executeQuery("SELECT validations.min, validations.max, descriptors.code FROM validations inner join sensors on sensors.validation_id=validations.id inner join descriptors on sensors.descriptor_id=descriptors.id inner join stations on sensors.station_id=stations.id where stations.gateway_id=${connectionOptions.gatewayId}")
+        override fun buildConfigFromDatabase(statement : Statement): String {
+            val rs = statement.executeQuery(
+                """SELECT validations.min,validations.max, descriptors.code
+                    FROM validations
+                    inner join sensors on sensors.validation_id=validations.id
+                    inner join descriptors on sensors.descriptor_id=descriptors.id
+                    inner join stations on sensors.station_id=stations.id
+                    where stations.gateway_id=${connectionOptions.gatewayId}""")
+
             var map = HashMap<String, Range>()
             while (rs.next()) {
                 map.put(
@@ -64,7 +96,7 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
 
     private  inner class Converter : Module ,MySqlConfigAvailable{
 
-        override fun getParams(): String =
+        override fun getConfig(): String =
             """{
                 "convertTemperature": ${getMysqlConfig(this)},
                   "convertLength": {},
@@ -75,7 +107,7 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
 
         override fun getStartCommand(): String = """java -jar modules/converter.jar"""
 
-        override fun buildParamsFromDatabase(statement : Statement): String {
+        override fun buildConfigFromDatabase(statement : Statement): String {
             var rs = statement.executeQuery("""SELECT fromUnit.unit as 'from',toUnit.unit as 'to', descriptors.code as 'sensor',stations.name, input_parameters.details FROM stations
                     inner join sensors on stations.id=sensors.station_id
                     inner join input_parameters on stations.input_parameter_id=input_parameters.id
@@ -102,40 +134,15 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
             return Gson().toJson(conversionMap)
         }
     }
-    private  inner class Reader : Module {
-
-        override fun getParams(): String =
-                """
-                |{"waitingPeriod":5000,
-                |"limit":10,
-                |"sendingPeriod":"800",
-                |"serviceQuality":2,
-                |"broker":"${mqttServerConfig.url}",
-                |"credentials":
-                |{"clientId":"reader",
-                |"user":"${mqttServerConfig.user}",
-                |"pass":"${mqttServerConfig.password}"},
-                |"database":
-                |{"URL":"${gatewayDbConfig.url}",
-                |"name":"${gatewayDbConfig.name}",
-                |"username":"${gatewayDbConfig.username}",
-                |"password":"${gatewayDbConfig.password}",
-                |"table":"${gatewayDbConfig.table}",
-                |"attributes":"ID,datum,temperatureat2meter,relativehumidity,table_from"}}""".trimMargin()
-
-        override fun getStartCommand(): String = """java -jar modules/reader.jar"""
-
-
-    }
 
     private inner class Tarolo : Module,  MySqlConfigAvailable {
-        override fun getParams(): String {
+        override fun getConfig(): String {
             return makeJsonPretty(getMysqlConfig(this))
         }
 
         override fun getStartCommand(): String = throw Exception("Tarolo modul nem indítható controller által")
 
-        override fun buildParamsFromDatabase(statement: Statement): String {
+        override fun buildConfigFromDatabase(statement: Statement): String {
             var rs =
                 statement.executeQuery("SELECT sensors.code as 'original', descriptors.code as 'real' FROM sensors inner join descriptors on sensors.descriptor_id=descriptors.id inner join stations on sensors.station_id=stations.id where gateway_id=${connectionOptions.gatewayId};")
             var arrayOfConversions = ArrayList<Conversion>()
@@ -178,7 +185,7 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
     }
 
     private inner class Writer : Module ,MySqlConfigAvailable{
-        override fun getParams(): String =
+        override fun getConfig(): String =
                 """{
                   "broker": "${mqttServerConfig.url}",
                   "serviceQuality": 2,
@@ -191,7 +198,7 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
 
         override fun getStartCommand(): String = "java -jar modules/writer.jar"
 
-        override fun buildParamsFromDatabase(statement : Statement): String {
+        override fun buildConfigFromDatabase(statement : Statement): String {
             val rs = statement.executeQuery(" SELECT output_parameters FROM gateways where id=1")
             rs.next()
             return rs.getString(1)
@@ -200,17 +207,21 @@ class ModuleRegistry(val connectionOptions: ConnectionOptions) {
 
     private fun getMysqlConfig(module : MySqlConfigAvailable) : String{
         Class.forName("com.mysql.cj.jdbc.Driver")
-        DriverManager.getConnection("jdbc:mysql://"+connectionOptions.url+"/"+connectionOptions.db+"?serverTimezone=UTC", connectionOptions.user, connectionOptions.password).use {
+        DriverManager.getConnection("jdbc:mysql://"+connectionOptions.url+
+            "/"+connectionOptions.db+
+            "?serverTimezone=UTC",
+            connectionOptions.user,
+            connectionOptions.password).use {
             val stmt = it.createStatement()
-            return module.buildParamsFromDatabase(stmt)
+            return module.buildConfigFromDatabase(stmt)
         }
     }
 }
 interface Module {
     fun getStartCommand() : String
-    fun getParams() : String
+    fun getConfig() : String
 }
 interface MySqlConfigAvailable {
-    fun buildParamsFromDatabase(statement : Statement) : String
+    fun buildConfigFromDatabase(statement : Statement) : String
 }
 

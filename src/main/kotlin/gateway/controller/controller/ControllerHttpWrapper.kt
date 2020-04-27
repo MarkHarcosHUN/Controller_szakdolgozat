@@ -30,7 +30,7 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
             return HttpResponse(e.localizedMessage)
         }
         return HttpResponse("Gateway started successfully...")
-    }
+}
 
     override fun stop(): HttpResponse {
         //stop command only allowed when the gateway is in 'running' state.
@@ -101,7 +101,6 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
 
         return HttpResponse(getHistory(model.amount))
     }
-
 
 }
 enum class ControllerState {

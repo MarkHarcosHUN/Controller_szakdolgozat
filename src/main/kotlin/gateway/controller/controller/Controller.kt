@@ -6,7 +6,6 @@ import gateway.controller.utils.HistoryManager.Companion.updateHistory
 import gateway.controller.db.InnerDatabase
 import gateway.controller.modules.ModuleController
 import gateway.controller.modules.ModuleRegistry
-import io.moquette.broker.Server
 import org.eclipse.paho.client.mqttv3.*
 import java.io.File
 import java.sql.DriverManager
@@ -80,7 +79,7 @@ class Controller : MqttCallback{
     private fun startModules() : Boolean {
         var moduleRegistry=ModuleRegistry(controllerConfigurationModel.connectionOptions)
 
-        File("config/tarolo.json").writeText(moduleRegistry.get("tarolo").getParams())
+        File("config/tarolo.json").writeText(moduleRegistry.get("tarolo").getConfig())
 
         controllerConfigurationModel.modules.forEachIndexed {index, moduleName ->
 
@@ -88,13 +87,10 @@ class Controller : MqttCallback{
 
             var command = module.getStartCommand().split(" ").toMutableList().apply {
 
-               // add("""{"topicAlive":"${moduleController.TOPIC_ALIVE}"}""")
-              //  add("""{"topicToSubscribe":"modules/$index"}""")
-              //  add("""{"topicToPublish":"modules/${index + 1}"}""")
                 add("""$TOPIC_ALIVE""")
                 add("""modules/$index""")
                 add("""modules/${index + 1}""")
-                add(module.getParams())
+                add(module.getConfig())
             }
             println(command)
             var proc = ProcessBuilder(convertToWin10(command)).start()

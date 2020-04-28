@@ -26,21 +26,21 @@ class Controller : MqttCallback{
 
     internal fun setupAndStart() {
 
-        updateHistory("Starting gateway...")
+        updateHistory("Gateway indítása folyamatban...")
 
         controllerConfigurationModel = InnerDatabase.getControllerConfig()
         moduleController = ModuleController()
         TOPIC_ACK = "modules/${controllerConfigurationModel.modules.size}"
         mqttClient=setupMqttClient()
 
-        updateHistory("Starting modules...")
+        updateHistory("Modulok indítása megkezdve...")
 
         try{
             if(startModules()){
                 mqttClient.publish(TOPIC_START, MqttMessage("start".toByteArray()))
                 supervisionThread = Thread(Supervision()).also { it.start() }
             } else{
-                throw Exception("Not all modules started correctly.")
+                throw Exception("Nem minden modult sikerült elindítani. Próbálkozzon újra.")
             }
         }catch(e: Exception){
             moduleController.killModules()
@@ -62,9 +62,9 @@ class Controller : MqttCallback{
 
 
     internal fun shutdown() {
-        updateHistory("Shutting down gateway....")
+        updateHistory("Gateway leállítása...")
         supervisionThread.interrupt()
-        updateHistory("Stopping modules...")
+        updateHistory("Modulok leállítása...")
         stopModules()
         mqttClient.disconnectForcibly()
         Thread.sleep(2000)
@@ -97,7 +97,7 @@ class Controller : MqttCallback{
             moduleController.addModule(moduleName,proc)
 
         }
-        println("Wait for modules to start")
+        println("Várakozás a modulok indítására.")
         Thread.sleep(3000)
         return moduleController.isAllModuleStarted()
     }
@@ -141,12 +141,12 @@ class Controller : MqttCallback{
 class Supervision : Runnable {
     override fun run() {
         try {
+            println("Felügyeleti szál elindítva...")
             while (true) {
-                println("supervision communicate with modules")
                 Thread.sleep(4000)
             }
         } catch (e: InterruptedException) {
-            println("supervision interrupted!")
+            println("Felügyelet megszakítva.")
         }
     }
 }

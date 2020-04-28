@@ -16,7 +16,7 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
         // start command only allowed when the gateway is in 'not running' state.
         synchronized(this) {
             if (controllerState != ControllerState.NOT_RUNNING) {
-                return HttpResponse("Cant start, because: ${controllerState}")
+                return HttpResponse("Nem indítható a gateway, mivel az állapota: ${controllerState}")
             }
             controllerState = ControllerState.INITIALIZING
         }
@@ -29,14 +29,14 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
             HistoryManager.updateHistory("Failed to start gateway: ${e.localizedMessage}")
             return HttpResponse(e.localizedMessage)
         }
-        return HttpResponse("Gateway started successfully...")
+        return HttpResponse("Gateway sikeresen elindítva.")
 }
 
     override fun stop(): HttpResponse {
         //stop command only allowed when the gateway is in 'running' state.
         synchronized(this) {
             if (controllerState != ControllerState.RUNNING) {
-                return HttpResponse("Cant stop, because: $controllerState")
+                return HttpResponse("Nemlehet leállítani a gateway-t, mivel az állapota: $controllerState")
             }
             controllerState = ControllerState.TERMINATING
         }
@@ -44,7 +44,7 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
         controller.shutdown()
         controllerState = ControllerState.NOT_RUNNING
 
-        return HttpResponse("Gateway stopped.")
+        return HttpResponse("A gateway leállt.")
     }
 
     override fun restart(): HttpResponse {
@@ -75,20 +75,20 @@ class ControllerHttpWrapper(var controller: Controller) : Manageable {
         // during initialization it may cause problems.
         synchronized(this) {
             if (controllerState == ControllerState.INITIALIZING || controllerState == ControllerState.TERMINATING) {
-                return HttpResponse("Cant save config, because: $controllerState")
+                return HttpResponse("Nem menthető a konfiguráció, mivel a gateway állapota: $controllerState")
             }
             // check if the format of the post request ok.
             val model = try {
                 convertFromJson(postJson, ControllerConfigurationModel::class.java)
             } catch (jse: JsonSyntaxException) {
-                return HttpResponse("Bad configuration format.") // not json
-            } ?: return HttpResponse("Empty Body") // empty post
+                return HttpResponse("Helytelen konfiguráció formátum!") // not json
+            } ?: return HttpResponse("Nem adott meg konfigurációt!") // empty post
 
             if (model.isValid()) {
                 controller.saveControllerConfig(postJson)
-                return HttpResponse("Configuration saved!")
+                return HttpResponse("A konfiguráció sieresen mentve!")
             }
-            else return HttpResponse("Invalid configuration.") // not all required parameter set
+            else return HttpResponse("Nem megfelelő konfiguráció! Ellenőrizze a helyességét!") // not all required parameter set
         }
     }
 
